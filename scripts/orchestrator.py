@@ -325,7 +325,10 @@ def run_regional(region_name, config, credentials, data_product, ceps_df,
                         f"[{state}] ERRO {row['LOJA']} | SKU: {row['SKU']} | "
                         f"{row.get('PRODUTO', '?')} | {type(e).__name__}: {e}"
                     )
-                    General.send_email_error(state, str(e), cep_err, row["LOJA"], row["SKU"], row["LINK"])
+                    try:
+                        General.send_email_error(state, str(e), cep_err, row["LOJA"], row["SKU"], row["LINK"])
+                    except Exception as email_err:
+                        logger.error(f"Falha ao enviar email de erro: {email_err}")
 
             if list_prices:
                 General.send_to_database(list_prices)
@@ -333,7 +336,10 @@ def run_regional(region_name, config, credentials, data_product, ceps_df,
 
         except Exception as e:
             logger.error(f"ERRO CRITICO no estado {state}: {e}")
-            General.send_email_error(state, str(e))
+            try:
+                General.send_email_error(state, str(e))
+            except Exception as email_err:
+                logger.error(f"Falha ao enviar email de erro: {email_err}")
 
 
 # ============================================================
@@ -417,7 +423,10 @@ def run_efizi_marketplace(region_name, config, credentials, data_product,
                         f"[{state}] ERRO {row['LOJA']} | SKU: {row['SKU']} | "
                         f"{row.get('PRODUTO', '?')} | {type(e).__name__}: {e}"
                     )
-                    General.send_email_error(state, str(e), row["CEP"], row["LOJA"], row["SKU"], row["LINK"])
+                    try:
+                        General.send_email_error(state, str(e), row["CEP"], row["LOJA"], row["SKU"], row["LINK"])
+                    except Exception as email_err:
+                        logger.error(f"Falha ao enviar email de erro: {email_err}")
 
             if list_prices:
                 data = DataFrame(list_prices)
@@ -448,7 +457,10 @@ def run_efizi_marketplace(region_name, config, credentials, data_product,
 
         except Exception as e:
             logger.error(f"ERRO CRITICO efizi marketplace {state}: {e}")
-            General.send_email_error(state, str(e))
+            try:
+                General.send_email_error(state, str(e))
+            except Exception as email_err:
+                logger.error(f"Falha ao enviar email de erro: {email_err}")
 
 
 # ============================================================
