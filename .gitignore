@@ -1,0 +1,19 @@
+# Ignore estes diretórios
+credentials/
+test/
+modules/__pycache__
+marketplaces_crawlers/__pycache__
+logs/
+__pycache__/
+
+# Ignore todos esses arquivos
+*.txt
+*.xlsx
+*.json
+*.ini
+
+# Apenas estes arquivos não são ignorados
+!requirements.txt
+!credentials/*.json
+!source/*.json
+!logs/*.txt
