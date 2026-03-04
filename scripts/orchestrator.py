@@ -29,7 +29,7 @@ logger = logging.getLogger("crawlers")
 
 REGION_CONFIG = {
     "sudeste": {
-        "states": ["SP", "MG", "RJ", "ES"],
+        "states": ["SP_INTERIOR","SP_CAPITAL", "MG", "RJ", "ES"],
         "cep_source": "bigquery",
         "crawlers": {
             "AMOEDO": ("marketplaces_crawlers.amoedo", "Amoedo"),
@@ -243,7 +243,7 @@ def loja_matches_filter(loja_name, filter_lojas):
 # ============================================================
 
 def run_regional(region_name, config, credentials, data_product, ceps_df,
-                 filter_states=None, filter_lojas=None):
+                 filter_states=None, filter_lojas=None, sem_efizi=False):
     logger.info(f"=== REGIONAL: {region_name.upper()} ===")
 
     states = config["states"]
@@ -255,6 +255,8 @@ def run_regional(region_name, config, credentials, data_product, ceps_df,
     # Importa apenas crawlers necessarios
     crawlers_dict = {}
     for store_name, (mod, cls) in config["crawlers"].items():
+        if sem_efizi and store_name.upper().startswith("EFIZI"):
+            continue
         if not loja_matches_filter(store_name, filter_lojas):
             continue
         try:
@@ -276,7 +278,12 @@ def run_regional(region_name, config, credentials, data_product, ceps_df,
             # CEP: tabela bi.ceps para sudeste, row["CEP"] para o resto
             cep_from_table = None
             if config["cep_source"] == "bigquery" and ceps_df is not None:
-                ceps_do_estado = ceps_df[ceps_df["UF"] == state]
+                if state == "SP_CAPITAL":
+                    ceps_do_estado = ceps_df[(ceps_df["UF"] == "SP") & (ceps_df["LOCALIDADE"] == "Capital")]
+                elif state == "SP_INTERIOR":
+                    ceps_do_estado = ceps_df[(ceps_df["UF"] == "SP") & (ceps_df["LOCALIDADE"] == "Interior")]
+                else:
+                    ceps_do_estado = ceps_df[ceps_df["UF"] == state]
                 if ceps_do_estado.empty:
                     logger.warning(f"Nenhum CEP em bi.ceps para {state}, pulando")
                     continue
@@ -569,6 +576,10 @@ def parse_args():
         help="Tipo de execucao. Sem argumento = todos."
     )
     parser.add_argument(
+        "--sem-efizi", action="store_true",
+        help="Exclui todos os crawlers EFIZI (marketplace, ecommerce e lojas EFIZI dentro das regionais)"
+    )
+    parser.add_argument(
         "--dry-run", action="store_true",
         help="Mostra o que seria executado sem rodar crawlers"
     )
@@ -592,13 +603,13 @@ def main():
 
     logger.info("=" * 60)
     logger.info("ORCHESTRATOR INICIADO")
-    logger.info(f"Filtros: regiao={args.regiao}, estado={args.estado}, loja={args.loja}, tipo={args.tipo}")
+    logger.info(f"Filtros: regiao={args.regiao}, estado={args.estado}, loja={args.loja}, tipo={args.tipo}, sem_efizi={args.sem_efizi}")
     logger.info("=" * 60)
 
     # Flags de tipo
     should_run_regional = args.tipo is None or "regional" in args.tipo
-    should_run_efizi_mkt = args.tipo is None or "efizi_marketplace" in args.tipo
-    should_run_efizi_ecom = args.tipo is None or "efizi_efizi" in args.tipo
+    should_run_efizi_mkt = (args.tipo is None or "efizi_marketplace" in args.tipo) and not args.sem_efizi
+    should_run_efizi_ecom = (args.tipo is None or "efizi_efizi" in args.tipo) and not args.sem_efizi
 
     # Credenciais (carrega uma vez)
     credentials = Efizi.load_json_credentials(credentials="./google_cloud_producao.json")
@@ -630,7 +641,9 @@ def main():
                 states = config["states"]
                 if args.estado:
                     states = [s for s in states if s in args.estado]
-                lojas = [l for l in config["crawlers"].keys() if loja_matches_filter(l, args.loja)]
+                lojas = [l for l in config["crawlers"].keys()
+                         if loja_matches_filter(l, args.loja)
+                         and not (args.sem_efizi and l.upper().startswith("EFIZI"))]
                 print(f"[DRY RUN] Regional: {region_name.upper()}")
                 print(f"  Estados: {states}")
                 print(f"  Lojas ({len(lojas)}): {', '.join(sorted(lojas))}")
@@ -639,7 +652,8 @@ def main():
 
             run_regional(
                 region_name, config, credentials, data_product, ceps_df,
-                filter_states=args.estado, filter_lojas=args.loja
+                filter_states=args.estado, filter_lojas=args.loja,
+                sem_efizi=args.sem_efizi
             )
             contadores["regioes"] += 1
 
