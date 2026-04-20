@@ -142,11 +142,18 @@ class EfiziEcommerce:
 
                 try:
                     response = requests.get(f'https://efizi.com.br/cart/shipping_rates.json?shipping_address%5Bcountry%5D=Brazil&shipping_address%5Bprovince%5D={region_to_search.replace(" ", "+")}&shipping_address%5Bzip%5D={d_para_cep[i["regionName"]]}', headers=headers_freight)
-                    prod_obj["valor_frete"] = float(response.json()["shipping_rates"][0]["price"])
-                    prod_obj["prazo_frete"] = str(response.json()["shipping_rates"][0]["delivery_days"][0])
-                except:
-                    if response.json()["shipping_rates"] == []:
+                    data = response.json()
+                    if data.get("shipping_rates"):
+                        prod_obj["valor_frete"] = float(data["shipping_rates"][0]["price"])
+                        prod_obj["prazo_frete"] = str(data["shipping_rates"][0]["delivery_days"][0])
+                    else:
                         prod_obj["disponibilidade"] = "CEP INDISPONIVEL"
+                        prod_obj["valor_frete"] = 0
+                        prod_obj["prazo_frete"] = ""
+                except (requests.exceptions.JSONDecodeError, KeyError):
+                    prod_obj["disponibilidade"] = "CEP INDISPONIVEL"
+                    prod_obj["valor_frete"] = 0
+                    prod_obj["prazo_frete"] = ""
                     
                 prod_obj["cep"] = d_para_cep[i["regionName"]]
                     
