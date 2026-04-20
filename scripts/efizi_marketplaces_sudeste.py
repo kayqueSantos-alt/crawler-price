@@ -26,6 +26,9 @@ from datetime import datetime
 credentials_google = Efizi.load_json_credentials(credentials="./google_cloud_producao.json")
 data_product = Efizi.get_bigquery("select sku, altura, categoria, largura, comprimento, peso from bi.categoria_fr", "efizi-analises", credentials_google)
 
+# Carrega a tabela de CEPs
+ceps_df = Efizi.get_bigquery("select UF, LOCALIDADE, CEP from bi.ceps", "efizi-analises", credentials_google)
+
 states_list = ["SP", "MG", "RJ", "ES"]
 
 crawlers_dict = {
@@ -43,24 +46,36 @@ region_products = Efizi.get_bigquery(f"select LOJA, LINK, SKU, PRODUTO, CEP, EST
 
 for state in states_list:
     try:
+        # --- LÓGICA DO CEP ---
+        ceps_do_estado = ceps_df[ceps_df["UF"] == state]
+
+        if ceps_do_estado.empty:
+            print(f"Nenhum CEP encontrado na tabela bi.ceps para o estado {state}")
+            continue
+
+        cep_para_consulta = str(ceps_do_estado.iloc[0]['CEP']).replace("-", "").strip()
+        # ---------------------
+
         # Busca produtos do Estado
         competitors_state = region_products[(region_products["ESTADO"] == state)]
 
         list_prices = []
+        print(f"\n====== INICIANDO ESTADO {state} (CEP: {cep_para_consulta}) ======")
+
         for index, row in competitors_state.iterrows():
             try:
                 prod_obj = {}
 
                 if row["LOJA"] == "EFIZI LEROY MERLIN":
-                    prod_obj = crawlers_dict["EFIZI LEROY MERLIN"].crawler(row["LINK"], row["CEP"], row["SKU"], row["LOJA"])
+                    prod_obj = crawlers_dict["EFIZI LEROY MERLIN"].crawler(row["LINK"], cep_para_consulta, row["SKU"], row["LOJA"])
                 elif "CARREFOUR" in row["LOJA"]:
-                    prod_obj = crawlers_dict["CARREFOUR"].crawler(row["LINK"], row["CEP"], row["SKU"], row["LOJA"], data_product)
+                    prod_obj = crawlers_dict["CARREFOUR"].crawler(row["LINK"], cep_para_consulta, row["SKU"], row["LOJA"], data_product)
                 elif "MERCADO LIVRE" in row["LOJA"] or "MAGALU" in row["LOJA"]:
-                    prod_obj = crawlers_dict[row["LOJA"]].crawler(row["LINK"], row["CEP"], row["SKU"], row["LOJA"], data_product)
+                    prod_obj = crawlers_dict[row["LOJA"]].crawler(row["LINK"], cep_para_consulta, row["SKU"], row["LOJA"], data_product)
                 elif row["LOJA"] in crawlers_dict:
-                    prod_obj = crawlers_dict[row["LOJA"]].crawler(row["LINK"], row["CEP"], row["SKU"])
+                    prod_obj = crawlers_dict[row["LOJA"]].crawler(row["LINK"], cep_para_consulta, row["SKU"])
 
-                prod_obj["cep"] = row["CEP"]
+                prod_obj["cep"] = cep_para_consulta
                 prod_obj["estado"] = state
                 prod_obj["loja"] = row["LOJA"]
                 prod_obj["link"] = row["LINK"]
@@ -70,7 +85,7 @@ for state in states_list:
                 list_prices.append(prod_obj.copy())
 
             except Exception as e:
-                General.send_email_error(state, str(e), row["CEP"], row["LOJA"], row["SKU"], row["LINK"])
+                General.send_email_error(state, str(e), cep_para_consulta, row["LOJA"], row["SKU"], row["LINK"])
 
         lojas = list({obj["loja"] for obj in list_prices})
         data = DataFrame(list_prices)
