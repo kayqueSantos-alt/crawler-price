@@ -503,21 +503,25 @@ def run_efizi_efizi():
         except Exception as e:
             tb = sys.exc_info()[2]
             lineno = tb.tb_lineno
-            Efizi.send_email(
-                credentials_bi["email"],
-                credentials_bi["password"],
-                "ti@efizi.com.br",
-                "[ERRO] PRECOS EFIZI",
-                f"""
-                    Houve erro no seguinte passo:
-                    Loja: {row["LOJA"]}
-                    Sku: {row["SKU"]}
-                    Link: {row["LINK"]}
-                    Erro na linha: {lineno}
-                    {str(e)}
-                """,
-                "plain"
-            )
+            logger.error(f"[EFIZI] Erro no SKU {row['SKU']} (linha {lineno}): {e}")
+            try:
+                Efizi.send_email(
+                    credentials_bi["email"],
+                    credentials_bi["password"],
+                    "ti@efizi.com.br",
+                    "[ERRO] PRECOS EFIZI",
+                    f"""
+                        Houve erro no seguinte passo:
+                        Loja: {row["LOJA"]}
+                        Sku: {row["SKU"]}
+                        Link: {row["LINK"]}
+                        Erro na linha: {lineno}
+                        {str(e)}
+                    """,
+                    "plain"
+                )
+            except Exception as email_err:
+                logger.error(f"Falha ao enviar email de erro: {email_err}")
 
     logger.info("Efizi ecommerce finalizado")
 

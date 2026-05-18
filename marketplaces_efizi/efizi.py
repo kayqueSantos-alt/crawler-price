@@ -112,6 +112,11 @@ class EfiziEcommerce:
         soup = BeautifulSoup(driver.page_source, "html.parser")
         produto = soup.find("input", {"id": "current-prices-by-regions"})
 
+        if produto is None:
+            driver.quit()
+            print(f"[EFIZI][WARN] SKU {sku} ({nome_produto}): elemento 'current-prices-by-regions' nao encontrado em {url}. Pulando.")
+            return prod_list
+
         value_str = produto.get("value")
         precos = json.loads(value_str)
 
