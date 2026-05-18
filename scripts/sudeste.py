@@ -6,7 +6,7 @@ import traceback
 import time
 import pandas as pd
 
-path = os.getenv('REPOSITORY_PRICE')
+path = str(Path(__file__).resolve().parent.parent)
 sys.path.append(path)
 
 from modules.logging_config import setup_logging

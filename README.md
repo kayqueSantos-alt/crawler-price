@@ -112,13 +112,9 @@ python scripts/orchestrator.py --tipo regional --regiao sul --estado RS
    - Iniciar em: `C:\Users\KayqueSantos\Desktop\dev\scraping review`
 4. Configurar horario/frequencia desejada
 
-### Variavel de Ambiente Necessaria
+### Setup de Caminhos
 
-O sistema precisa da variavel de ambiente `REPOSITORY_PRICE` apontando para o diretorio do projeto:
-
-```
-REPOSITORY_PRICE=C:\Users\KayqueSantos\Desktop\dev\competitor_price_crawler
-```
+A raiz do projeto e detectada automaticamente via `Path(__file__).resolve().parent.parent` em todos os scripts. Nao e necessario configurar nenhuma variavel de ambiente (`REPOSITORY_PRICE`/`REPOSITORY_PRODUCTION` foram removidas).
 
 ---
 

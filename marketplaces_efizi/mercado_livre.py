@@ -6,7 +6,7 @@ class MercadoLivre:
         import requests
         import re
 
-        path = os.getenv('REPOSITORY_PRICE')
+        path = str(Path(__file__).resolve().parent.parent)
         # Seta o caminho da pasta que contém os modules
         sys.path.append(path)
 
@@ -20,7 +20,7 @@ class MercadoLivre:
         
 
         google_sheets_id = "1eKOcnESAnVz-WuF3QbLyKQX0SjG-NFzZlcSFGXwUJLs"
-        enviroment_path = os.getenv('REPOSITORY_PRODUCTION')
+        enviroment_path = str(Path(__file__).resolve().parent.parent)
         credentials_google_sheets = Path(enviroment_path) / "credentials" / "service_account_google_sheets.json"
 
         prod_obj = {}

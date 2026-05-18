@@ -1,7 +1,7 @@
 import sys 
 from pathlib import Path
 import os
-path = os.getenv('REPOSITORY_PRICE')
+path = str(Path(__file__).resolve().parent.parent)
 # Seta o caminho da pasta que contém os modules
 sys.path.append(path)
 
