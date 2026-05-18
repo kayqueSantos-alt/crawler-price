@@ -9,7 +9,7 @@ class Efizi():
 
     global enviroment_path
 
-    enviroment_path = os.getenv('REPOSITORY_PRICE')
+    enviroment_path = str(Path(__file__).resolve().parent.parent)
 
     def deprecated(func):
         """Função que impede a utilização de funções inativas"""

@@ -5,8 +5,9 @@ import logging
 import importlib
 import argparse
 from datetime import datetime
+from pathlib import Path
 
-path = os.getenv('REPOSITORY_PRICE')
+path = str(Path(__file__).resolve().parent.parent)
 sys.path.append(path)
 
 # Adiciona o diretorio raiz do projeto (pai de scripts/) ao path

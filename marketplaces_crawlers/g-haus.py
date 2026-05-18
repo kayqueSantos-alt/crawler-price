@@ -2,9 +2,10 @@
 class g_haus:
     def crawnly(url, cep, sku, produto, estado):
         loja = "G-Haus"
-        import sys 
+        import sys
         import os
-        path = os.getenv('REPOSITORY_PRICE')
+        from pathlib import Path
+        path = str(Path(__file__).resolve().parent.parent)
         # Seta o caminho da pasta que contém os modules
         sys.path.append(path)
         from modules.crawler_settings import Crawler

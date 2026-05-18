@@ -4,7 +4,7 @@ from pathlib import Path
 import os
 import sys
 import json
-path = os.getenv('REPOSITORY_PRICE')
+path = str(Path(__file__).resolve().parent.parent)
 sys.path.append(path)
 from modules.efizitools import Efizi
 import pandas as pd
@@ -14,7 +14,7 @@ credentials_bi = json.loads(credentials_bi)
 
 try:
     google_sheets_id = "1eKOcnESAnVz-WuF3QbLyKQX0SjG-NFzZlcSFGXwUJLs"
-    enviroment_path = os.getenv('REPOSITORY_PRODUCTION')
+    enviroment_path = str(Path(__file__).resolve().parent.parent)
     credentials_google_sheets = Path(enviroment_path) / "credentials" / "service_account_google_sheets.json"
 
     CLIENT_ID = "4853712245807904"
